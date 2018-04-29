@@ -13,6 +13,11 @@ module.exports = function (config) {
     preprocessors: {
       'tests/**/*.ts': ['webpack']
     },
+    plugins: [
+      'karma-jasmine',
+      'karma-jasmine-ajax',
+      'karma-webpack' // *** This 'registers' the Karma webpack plugin.
+    ],
     webpack: {
       module: webpackConfig.module,
       resolve: webpackConfig.resolve

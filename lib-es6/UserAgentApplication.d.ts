@@ -7,7 +7,7 @@ declare global  {
         callBacksMappedToRenewStates: Object;
     }
 }
-export declare type tokenReceivedCallback = (errorDesc: string, token: string, error: string, tokenType: string) => void;
+export declare type tokenReceivedCallback = (errorDesc: string, token: string, error: string, tokenType: string, userState: string) => void;
 export declare class UserAgentApplication {
     private _cacheLocations;
     private _cacheLocation;
@@ -26,6 +26,7 @@ export declare class UserAgentApplication {
     authority: string;
     validateAuthority: boolean;
     private _redirectUri;
+    private _state;
     private _postLogoutredirectUri;
     private _openedWindows;
     private _requestType;
@@ -39,6 +40,7 @@ export declare class UserAgentApplication {
         logger?: Logger;
         loadFrameTimeout?: number;
         navigateToLoginRequestUrl?: boolean;
+        state?: string;
     });
     private processCallBack(hash);
     loginRedirect(scopes?: Array<string>, extraQueryParameters?: string): void;
@@ -79,5 +81,6 @@ export declare class UserAgentApplication {
     private getHash(hash);
     private getRequestInfo(hash);
     private getScopeFromState(state);
+    getUserState(state: string): string;
     private isInIframe();
 }

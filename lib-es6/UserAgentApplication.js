@@ -83,7 +83,7 @@ var UserAgentApplication = /** @class */ (function () {
          * @hidden
          */
         this._tokenReceivedCallback = null;
-        var _a = options.validateAuthority, validateAuthority = _a === void 0 ? true : _a, _b = options.cacheLocation, cacheLocation = _b === void 0 ? "sessionStorage" : _b, _c = options.redirectUri, redirectUri = _c === void 0 ? window.location.href.split("?")[0].split("#")[0] : _c, _d = options.postLogoutRedirectUri, postLogoutRedirectUri = _d === void 0 ? window.location.href.split("?")[0].split("#")[0] : _d, _e = options.logger, logger = _e === void 0 ? new Logger(null) : _e, _f = options.loadFrameTimeout, loadFrameTimeout = _f === void 0 ? 6000 : _f, _g = options.navigateToLoginRequestUrl, navigateToLoginRequestUrl = _g === void 0 ? true : _g;
+        var _a = options.validateAuthority, validateAuthority = _a === void 0 ? true : _a, _b = options.cacheLocation, cacheLocation = _b === void 0 ? "sessionStorage" : _b, _c = options.redirectUri, redirectUri = _c === void 0 ? window.location.href.split("?")[0].split("#")[0] : _c, _d = options.postLogoutRedirectUri, postLogoutRedirectUri = _d === void 0 ? window.location.href.split("?")[0].split("#")[0] : _d, _e = options.logger, logger = _e === void 0 ? new Logger(null) : _e, _f = options.loadFrameTimeout, loadFrameTimeout = _f === void 0 ? 6000 : _f, _g = options.navigateToLoginRequestUrl, navigateToLoginRequestUrl = _g === void 0 ? true : _g, _h = options.state, state = _h === void 0 ? "" : _h;
         this.loadFrameTimeout = loadFrameTimeout;
         this.clientId = clientId;
         this.validateAuthority = validateAuthority;
@@ -97,6 +97,7 @@ var UserAgentApplication = /** @class */ (function () {
         this._activeRenewals = {};
         this._cacheLocation = cacheLocation;
         this._navigateToLoginRequestUrl = navigateToLoginRequestUrl;
+        this._state = state;
         if (!this._cacheLocations[cacheLocation]) {
             throw new Error("Cache Location is not valid. Provided value:" + this._cacheLocation + ".Possible values are: " + this._cacheLocations.localStorage + ", " + this._cacheLocations.sessionStorage);
         }
@@ -170,7 +171,7 @@ var UserAgentApplication = /** @class */ (function () {
         this._cacheStorage.removeItem(Constants.urlHash);
         try {
             if (this._tokenReceivedCallback) {
-                this._tokenReceivedCallback.call(this, errorDesc, token, error, tokenType);
+                this._tokenReceivedCallback.call(this, errorDesc, token, error, tokenType, this.getUserState(this._cacheStorage.getItem(Constants.stateLogin)));
             }
         }
         catch (err) {
@@ -191,7 +192,7 @@ var UserAgentApplication = /** @class */ (function () {
          */
         if (this._loginInProgress) {
             if (this._tokenReceivedCallback) {
-                this._tokenReceivedCallback("Login is in progress", null, null, Constants.idToken);
+                this._tokenReceivedCallback("Login is in progress", null, null, Constants.idToken, this.getUserState(this._cacheStorage.getItem(Constants.stateLogin)));
                 return;
             }
         }
@@ -199,7 +200,7 @@ var UserAgentApplication = /** @class */ (function () {
             var isValidScope = this.validateInputScope(scopes);
             if (isValidScope && !Utils.isEmpty(isValidScope)) {
                 if (this._tokenReceivedCallback) {
-                    this._tokenReceivedCallback(isValidScope, null, null, Constants.idToken);
+                    this._tokenReceivedCallback(isValidScope, null, null, Constants.idToken, this.getUserState(this._cacheStorage.getItem(Constants.stateLogin)));
                     return;
                 }
             }
@@ -207,7 +208,7 @@ var UserAgentApplication = /** @class */ (function () {
         }
         this.authorityInstance.ResolveEndpointsAsync()
             .then(function () {
-            var authenticationRequest = new AuthenticationRequestParameters(_this.authorityInstance, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri);
+            var authenticationRequest = new AuthenticationRequestParameters(_this.authorityInstance, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri, _this._state);
             if (extraQueryParameters) {
                 authenticationRequest.extraQueryParameters = extraQueryParameters;
             }
@@ -262,7 +263,7 @@ var UserAgentApplication = /** @class */ (function () {
                 return;
             }
             _this.authorityInstance.ResolveEndpointsAsync().then(function () {
-                var authenticationRequest = new AuthenticationRequestParameters(_this.authorityInstance, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri);
+                var authenticationRequest = new AuthenticationRequestParameters(_this.authorityInstance, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri, _this._state);
                 if (extraQueryParameters) {
                     authenticationRequest.extraQueryParameters = extraQueryParameters;
                 }
@@ -687,7 +688,7 @@ var UserAgentApplication = /** @class */ (function () {
         var isValidScope = this.validateInputScope(scopes);
         if (isValidScope && !Utils.isEmpty(isValidScope)) {
             if (this._tokenReceivedCallback) {
-                this._tokenReceivedCallback(isValidScope, null, null, Constants.accessToken);
+                this._tokenReceivedCallback(isValidScope, null, null, Constants.accessToken, this.getUserState(this._cacheStorage.getItem(Constants.stateLogin)));
                 return;
             }
         }
@@ -701,7 +702,7 @@ var UserAgentApplication = /** @class */ (function () {
         var scope = scopes.join(" ").toLowerCase();
         if (!userObject) {
             if (this._tokenReceivedCallback) {
-                this._tokenReceivedCallback(ErrorDescription.userLoginError, null, ErrorCodes.userLoginError, Constants.accessToken);
+                this._tokenReceivedCallback(ErrorDescription.userLoginError, null, ErrorCodes.userLoginError, Constants.accessToken, this.getUserState(this._cacheStorage.getItem(Constants.stateLogin)));
                 return;
             }
         }
@@ -710,10 +711,10 @@ var UserAgentApplication = /** @class */ (function () {
         var acquireTokenAuthority = authority ? AuthorityFactory.CreateInstance(authority, this.validateAuthority) : this.authorityInstance;
         acquireTokenAuthority.ResolveEndpointsAsync().then(function () {
             if (Utils.compareObjects(userObject, _this.getUser())) {
-                authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.token, _this._redirectUri);
+                authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.token, _this._redirectUri, _this._state);
             }
             else {
-                authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.id_token_token, _this._redirectUri);
+                authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.id_token_token, _this._redirectUri, _this._state);
             }
             _this._cacheStorage.setItem(Constants.nonceIdToken, authenticationRequest.nonce);
             var acquireTokenUserKey = Constants.acquireTokenUser + Constants.resourceDelimeter + userObject.userIdentifier + Constants.resourceDelimeter + authenticationRequest.state;
@@ -766,14 +767,14 @@ var UserAgentApplication = /** @class */ (function () {
             acquireTokenAuthority.ResolveEndpointsAsync().then(function () {
                 if (Utils.compareObjects(userObject, _this.getUser())) {
                     if (scopes.indexOf(_this.clientId) > -1) {
-                        authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri);
+                        authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri, _this._state);
                     }
                     else {
-                        authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.token, _this._redirectUri);
+                        authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.token, _this._redirectUri, _this._state);
                     }
                 }
                 else {
-                    authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.id_token_token, _this._redirectUri);
+                    authenticationRequest = new AuthenticationRequestParameters(acquireTokenAuthority, _this.clientId, scopes, ResponseTypes.id_token_token, _this._redirectUri, _this._state);
                 }
                 _this._cacheStorage.setItem(Constants.nonceIdToken, authenticationRequest.nonce);
                 authenticationRequest.state = authenticationRequest.state;
@@ -843,14 +844,14 @@ var UserAgentApplication = /** @class */ (function () {
                 var newAuthority = authority ? AuthorityFactory.CreateInstance(authority, _this.validateAuthority) : _this.authorityInstance;
                 if (Utils.compareObjects(userObject_1, _this.getUser())) {
                     if (scopes.indexOf(_this.clientId) > -1) {
-                        authenticationRequest_1 = new AuthenticationRequestParameters(newAuthority, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri);
+                        authenticationRequest_1 = new AuthenticationRequestParameters(newAuthority, _this.clientId, scopes, ResponseTypes.id_token, _this._redirectUri, _this._state);
                     }
                     else {
-                        authenticationRequest_1 = new AuthenticationRequestParameters(newAuthority, _this.clientId, scopes, ResponseTypes.token, _this._redirectUri);
+                        authenticationRequest_1 = new AuthenticationRequestParameters(newAuthority, _this.clientId, scopes, ResponseTypes.token, _this._redirectUri, _this._state);
                     }
                 }
                 else {
-                    authenticationRequest_1 = new AuthenticationRequestParameters(newAuthority, _this.clientId, scopes, ResponseTypes.id_token_token, _this._redirectUri);
+                    authenticationRequest_1 = new AuthenticationRequestParameters(newAuthority, _this.clientId, scopes, ResponseTypes.id_token_token, _this._redirectUri, _this._state);
                 }
                 var cacheResult = _this.getCachedToken(authenticationRequest_1, userObject_1);
                 if (cacheResult) {
@@ -1392,6 +1393,22 @@ var UserAgentApplication = /** @class */ (function () {
         }
         return "";
     };
+    /*
+    * Extracts state value from the userState sent with the authentication request.
+    * @returns {string} scope.
+    * @ignore
+    * @hidden
+    */
+    UserAgentApplication.prototype.getUserState = function (state) {
+        if (state) {
+            var splitIndex = state.indexOf("|");
+            if (splitIndex > -1 && splitIndex + 1 < state.length) {
+                return state.substring(splitIndex + 1);
+            }
+        }
+        return "";
+    };
+    ;
     /*
       * Returns whether current window is in ifram for token renewal
       * @ignore

@@ -10,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/AzureAD/microsoft-authentication-library-for-js.git"
   },
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Microsoft Authentication Library for js",
   "keywords": [
     "implicit",
@@ -25,6 +25,7 @@
     "node": ">=0.8.0"
   },
   "dependencies": {
+    "@types/node": "^9.6.7",
     "tslib": "^1.7.1"
   },
   "devDependencies": {
@@ -44,7 +45,7 @@
     "grunt-typedoc": "^0.2.4",
     "jasmine": "^2.8.0",
     "jasmine-ajax": "^3.3.1",
-    "jasmine-core": "^2.5.2",
+    "jasmine-core": "^2.8.0",
     "jasmine-node": "~1.14.5",
     "jshint": "*",
     "karma": "^1.6.0",
@@ -54,7 +55,7 @@
     "karma-html-reporter": "^0.2.7",
     "karma-jasmine": "^1.1.0",
     "karma-jasmine-ajax": "^0.1.13",
-    "karma-phantomjs-launcher": "*",
+    "karma-phantomjs-launcher": "^1.0.4",
     "karma-typescript": "^3.0.7",
     "karma-verbose-reporter": "0.0.6",
     "karma-webpack": "^2.0.5",
@@ -64,7 +65,7 @@
     "typedoc": "^0.6.0",
     "typescript": "^2.5.3",
     "typings": "^2.1.1",
-    "webpack": "^3.6.0"
+    "webpack": "^3.11.0"
   },
   "directories": {
     "test": "tests"
@@ -74,6 +75,7 @@
     "doc": "typedoc --out ./docs ./src/**/* --gitRevision dev",
     "build:modules": "tsc && tsc -m es6 --outDir lib-es6",
     "build": "npm run clean && npm run doc && npm run build:modules && webpack && grunt && npm test",
+    "buildnodoc": "npm run clean && npm run build:modules && webpack && grunt && npm test",
     "test": "typings install && karma start && jasmine-node tests/MSALSpec.js"
   }
 }
